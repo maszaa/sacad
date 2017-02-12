@@ -1,4 +1,5 @@
 import collections
+import random
 
 import lxml.cssselect
 import lxml.etree
@@ -18,6 +19,13 @@ class AlbumArtExchangeCoverSource(CoverSource):
   """ Cover source scraping www.albumartexchange.com. """
 
   BASE_URL = "http://www.albumartexchange.com"
+
+  def __init__(self, *args, **kwargs):
+    super().__init__(*args, min_delay_between_accesses=2, **kwargs)
+
+  def updateHttpHeaders(self, headers):
+    """ See CoverSource.updateHttpHeaders. """
+    headers["User-Agent"] = "Mozilla/5.0 Firefox/%u.0" % (random.randint(4, 51))
 
   def getSearchUrl(self, album, artist):
     """ See CoverSource.getSearchUrl. """
