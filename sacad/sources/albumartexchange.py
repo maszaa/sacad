@@ -21,7 +21,7 @@ class AlbumArtExchangeCoverSource(CoverSource):
   BASE_URL = "http://www.albumartexchange.com"
 
   def __init__(self, *args, **kwargs):
-    super().__init__(*args, min_delay_between_accesses=2, **kwargs)
+    super().__init__(*args, min_delay_between_accesses=2, allow_cookies=True, **kwargs)
 
   def updateHttpHeaders(self, headers):
     """ See CoverSource.updateHttpHeaders. """
