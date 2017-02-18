@@ -1,4 +1,5 @@
 import collections
+import os
 import random
 
 import lxml.cssselect
@@ -6,6 +7,9 @@ import lxml.etree
 
 from sacad.cover import CoverImageFormat, CoverSourceQuality, CoverSourceResult
 from sacad.sources.base import CoverSource
+
+
+IS_TRAVIS = os.getenv("CI") and os.getenv("TRAVIS")
 
 
 class AlbumArtExchangeCoverSourceResult(CoverSourceResult):
@@ -21,7 +25,7 @@ class AlbumArtExchangeCoverSource(CoverSource):
   BASE_URL = "http://www.albumartexchange.com"
 
   def __init__(self, *args, **kwargs):
-    super().__init__(*args, min_delay_between_accesses=2, allow_cookies=True, **kwargs)
+    super().__init__(*args, min_delay_between_accesses=15 if IS_TRAVIS else 3, allow_cookies=True, **kwargs)
 
   def updateHttpHeaders(self, headers):
     """ See CoverSource.updateHttpHeaders. """
