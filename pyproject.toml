@@ -1,0 +1,44 @@
+[tool.poetry]
+name = "sacad"
+version = "2.1.9"
+description = "Smart Automatic Cover Art Downloader: Search and download music album covers"
+readme = "README.md"
+homepage = "https://github.com/desbma/sacad"
+authors = ["desbma"]
+license = "MPL-2.0"
+keywords = ["download", "album", "cover", "art", "albumart"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: End Users/Desktop",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Multimedia :: Graphics",
+    "Topic :: Utilities"
+]
+
+
+[tool.poetry.dependencies]
+python = "^3.5.3"
+aiohttp = "^3.5"
+appdirs = "^1.4.0"
+bitarray = "^0.8.3"
+cssselect = "^0.9.1"
+lxml = "^4"
+mutagen = "^1.31"
+pillow = "^2.7.0"
+tqdm = "^4.28.1"
+web_cache = "^1.1.0"
+
+[tool.poetry.dev-dependencies]
+requests = "^2.21"
+coveralls = "^1.6"
+
+[tool.poetry.scripts]
+sacad = "sacad:cl_main"
+sacad_r = "sacad.recurse:cl_main"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
