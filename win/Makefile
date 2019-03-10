@@ -1,18 +1,24 @@
 WINEARCH ?= win32
 
 # versions
-PYTHON_VERSION       := 3.6.4
-PYTHON_VERSION_DL    := 3.6.4
+PYTHON_VERSION       := 3.6.8
 PYTHON_VERSION_MAJOR := $(word 1,$(subst ., ,${PYTHON_VERSION})).$(word 2,$(subst ., ,${PYTHON_VERSION}))
 PYTHON_VERSION_SHORT := $(subst .,,${PYTHON_VERSION_MAJOR})
 CXFREEZE_VERSION     := 5.1.1
 LXML_VERSION         := 4.2.0
 BITARRAY_VERSION     := 0.8.3
 
+# dirs
+WINE_DIR           := /tmp/$(subst /,_,${CURDIR})/wine-${WINEARCH}
+TARGET_PROJECT_DIR := ${WINE_DIR}/drive_c/sacad
+POETRY_VENV_DIR    := ${WINE_DIR}/drive_c/venv
+DOWNLOAD_DIR       := ${WINE_DIR}/drive_c/dl
+TEST_LIB_DIR       := ${WINE_DIR}/drive_c/music
+OUTPUT_DIR         := sacad-${WINEARCH}
+
 # installers
-DOWNLOAD_DIR            ?= dl
-PYTHON_INSTALLER-win32  := ${DOWNLOAD_DIR}/python-${PYTHON_VERSION_DL}.exe
-PYTHON_INSTALLER-win64  := ${DOWNLOAD_DIR}/python-${PYTHON_VERSION_DL}-amd64.exe
+PYTHON_INSTALLER-win32  := ${DOWNLOAD_DIR}/python-${PYTHON_VERSION}.exe
+PYTHON_INSTALLER-win64  := ${DOWNLOAD_DIR}/python-${PYTHON_VERSION}-amd64.exe
 PYTHON_INSTALLER        := ${PYTHON_INSTALLER-${WINEARCH}}
 CXFREEZE_WHEEL-win32    := ${DOWNLOAD_DIR}/cx_Freeze-${CXFREEZE_VERSION}-cp${PYTHON_VERSION_SHORT}-cp${PYTHON_VERSION_SHORT}m-${WINEARCH}.whl
 CXFREEZE_WHEEL-win64    := ${DOWNLOAD_DIR}/cx_Freeze-${CXFREEZE_VERSION}-cp${PYTHON_VERSION_SHORT}-cp${PYTHON_VERSION_SHORT}m-win_amd64.whl
@@ -25,22 +31,18 @@ BITARRAY_WHEEL-win64    := ${DOWNLOAD_DIR}/bitarray-${BITARRAY_VERSION}-cp${PYTH
 BITARRAY_WHEEL          := ${BITARRAY_WHEEL-${WINEARCH}}
 7ZIP_INSTALLER          := ${DOWNLOAD_DIR}/7z938.msi
 
-# env
-CURL     := curl -s -f -L -m 600 --connect-timeout 30 --retry 10 --retry-max-time 5
-WINE_DIR := /tmp/$(subst /,_,${CURDIR})/wine-${WINEARCH}
-WINE     := mkdir -p $(dir ${WINE_DIR}) && WINEPREFIX=${WINE_DIR} WINEARCH=${WINEARCH} WINEDLLOVERRIDES="mscoree,mshtml=" WINEDEBUG=-all wine
-
 # installed files
 PYTHON_INSTALLED   := ${WINE_DIR}/drive_c/Python${PYTHON_VERSION_SHORT}/python.exe
-CXFREEZE_INSTALLED := ${WINE_DIR}/drive_c/Python${PYTHON_VERSION_SHORT}/Scripts/cxfreeze
+CXFREEZE_INSTALLED := ${POETRY_VENV_DIR}/sacad-py${PYTHON_VERSION_MAJOR}/Scripts/cxfreeze
 PIP_INSTALLED      := ${WINE_DIR}/drive_c/Python${PYTHON_VERSION_SHORT}/Scripts/pip.exe
-LXML_INSTALLED     := ${WINE_DIR}/drive_c/Python${PYTHON_VERSION_SHORT}/Lib/site-packages/lxml/__init__.py
-BITARRAY_INSTALLED := ${WINE_DIR}/drive_c/Python${PYTHON_VERSION_SHORT}/Lib/site-packages/bitarray/__init__.py
+POETRY_INSTALLED   := ${WINE_DIR}/drive_c/Python${PYTHON_VERSION_SHORT}/Scripts/poetry.exe
+LXML_INSTALLED     := ${POETRY_VENV_DIR}/sacad-py${PYTHON_VERSION_MAJOR}/Lib/site-packages/lxml/__init__.py
+BITARRAY_INSTALLED := ${POETRY_VENV_DIR}/sacad-py${PYTHON_VERSION_MAJOR}/Lib/site-packages/bitarray/__init__.py
 7ZIP_INSTALLED     := ${WINE_DIR}/drive_c/7-Zip/7z.sfx
 
-# temp dirs
-TEST_LIB_DIR := ${WINE_DIR}/drive_c/music
-OUTPUT_DIR   := sacad-${WINEARCH}
+# env
+CURL     := curl -s -f -L -m 600 --connect-timeout 30 --retry 10 --retry-max-time 5
+WINE     := mkdir -p $(dir ${WINE_DIR}) && WINEPREFIX=${WINE_DIR} WINEARCH=${WINEARCH} WINEDLLOVERRIDES="mscoree,mshtml=" WINEDEBUG=-all PYTHON_INSTALL_DIR=$(dir ${PYTHON_INSTALLED}) wine
 
 
 .PHONY: all test test_ut test_freeze fclean clean
@@ -72,10 +74,10 @@ sacad_${WINEARCH}.exe: ${7ZIP_INSTALLED} sacad_${WINEARCH}.7z
 # Intermediate targets
 #
 
-${OUTPUT_DIR}/sacad.exe: ${CXFREEZE_INSTALLED} ${LXML_INSTALLED} ${BITARRAY_INSTALLED} .requirements
+${OUTPUT_DIR}/sacad.exe: ${CXFREEZE_INSTALLED} .requirements
 	mkdir -p $(dir $@)
-	cd .. && ${WINE} ${PYTHON_INSTALLED} freeze.py build_exe -b win/${OUTPUT_DIR} 2> /dev/null > /dev/null
-	touch $@
+	cd ${TARGET_PROJECT_DIR} && ${WINE} ${POETRY_INSTALLED} run python freeze.py build_exe -b win/${OUTPUT_DIR} 2> /dev/null > /dev/null
+	cp ${TARGET_PROJECT_DIR}/win/${OUTPUT_DIR}/sacad.exe $@
 
 ${OUTPUT_DIR}/sacad_r.exe: ${OUTPUT_DIR}/sacad.exe
 
@@ -100,8 +102,8 @@ ${OUTPUT_DIR}/readme.txt:
 # Tests
 #
 
-test_ut: ${LXML_INSTALLED} ${BITARRAY_INSTALLED} .requirements
-	cd .. && ${WINE} ${PYTHON_INSTALLED} setup.py test
+test_ut: .requirements
+	cd ${TARGET_PROJECT_DIR} && ${WINE} ${POETRY_INSTALLED} run python -m unittest tests/*.py -v
 
 test_freeze:: ${TEST_LIB_DIR}/test.jpg ${TEST_LIB_DIR}/test.png
 
@@ -121,33 +123,42 @@ ${TEST_LIB_DIR}/test.png: ${TEST_LIB_DIR}/sample.ogg ${OUTPUT_DIR}/sacad_r.exe $
 # Installations
 #
 
-.requirements: ${PIP_INSTALLED}
-	cd .. && ${WINE} ${PYTHON_INSTALLED} -m pip -qqq install -r requirements.txt
+.requirements: ${POETRY_INSTALLED} ${TARGET_PROJECT_DIR}/pyproject.toml ${LXML_INSTALLED} ${BITARRAY_INSTALLED}
+	cd ${TARGET_PROJECT_DIR} && ${WINE} ${POETRY_INSTALLED} install -vvv -n
 	touch $@
 
 ${PYTHON_INSTALLED}: ${PYTHON_INSTALLER}
 	${WINE} $< /quiet InstallAllUsers=1 TargetDir=$(dir ${PYTHON_INSTALLED})
 	touch $@
 
-${CXFREEZE_INSTALLED}: ${CXFREEZE_WHEEL} ${PIP_INSTALLED} ${PYTHON_INSTALLED}
-	${WINE} ${PYTHON_INSTALLED} -m pip -qqq install $<
+${CXFREEZE_INSTALLED}: ${CXFREEZE_WHEEL} ${TARGET_PROJECT_DIR}/pyproject.toml ${POETRY_INSTALLED}
+	cd ${TARGET_PROJECT_DIR} && ${WINE} ${POETRY_INSTALLED} run pip -qqq install $<
 	touch $@
 
 ${PIP_INSTALLED}: ${PYTHON_INSTALLED}
 	${WINE} ${PYTHON_INSTALLED} -m pip -qqq install -U pip
 	touch $@
 
-${LXML_INSTALLED}: ${LXML_WHEEL} ${PIP_INSTALLED} ${PYTHON_INSTALLED}
-	${WINE} ${PYTHON_INSTALLED} -m pip -qqq install $<
+${POETRY_INSTALLED}: ${PIP_INSTALLED}
+	${WINE} ${PIP_INSTALLED} -qqq install -U poetry
+	#${WINE} $@ config settings.virtualenvs.create false
+	${WINE} $@ config settings.virtualenvs.path /$(notdir ${POETRY_VENV_DIR})
 	touch $@
 
-${BITARRAY_INSTALLED}: ${BITARRAY_WHEEL} ${PIP_INSTALLED} ${PYTHON_INSTALLED}
-	${WINE} ${PYTHON_INSTALLED} -m pip -qqq install $<
+${LXML_INSTALLED}: ${LXML_WHEEL} ${TARGET_PROJECT_DIR}/pyproject.toml ${POETRY_INSTALLED}
+	cd ${TARGET_PROJECT_DIR} && ${WINE} ${POETRY_INSTALLED} run pip -qqq install $<
+	touch $@
+
+${BITARRAY_INSTALLED}: ${BITARRAY_WHEEL} ${TARGET_PROJECT_DIR}/pyproject.toml ${POETRY_INSTALLED}
+	cd ${TARGET_PROJECT_DIR} && ${WINE} ${POETRY_INSTALLED} run pip -qqq install $<
 	touch $@
 
 ${7ZIP_INSTALLED}: ${7ZIP_INSTALLER}
 	${WINE} msiexec /i $< /qb INSTALLDIR='c:\7-Zip'
 	touch $@
+
+${TARGET_PROJECT_DIR}/pyproject.toml: ../pyproject.toml ${PYTHON_INSTALLED}
+	cp -R .. ${TARGET_PROJECT_DIR}
 
 
 #
@@ -196,10 +207,7 @@ ${DOWNLOAD_DIR}/sample.ogg:
 # Clean
 #
 
-fclean:
+clean:
 	-rm -Rf ${WINE_DIR}
 	-rm -Rf ${OUTPUT_DIR} .requirements
 	-rm -f sacad_${WINEARCH}.7z sacad_${WINEARCH}.zip sacad_${WINEARCH}.exe
-
-clean: fclean
-	-rm -Rf ${DOWNLOAD_DIR}

@@ -47,8 +47,8 @@ install:
   - "if [ $WINDOWS_TEST -eq 1 ]; then sudo apt-get -V install winehq-stable p7zip-full; fi"
 script:
   - "if [ $NATIVE_TEST -eq 1 ]; then travis_retry coverage run --source=sacad -m unittest tests/*.py -v; fi"
-#  - "if [ $WINDOWS_TEST -eq 1 ]; then pushd win && TEST_DL_CACHE_DIR=$CI_CACHE_DIR/test DOWNLOAD_DIR=$CI_CACHE_DIR/build WINEARCH=win32 make test && popd; fi"
-#  - "if [ $WINDOWS_TEST -eq 1 ]; then pushd win && TEST_DL_CACHE_DIR=$CI_CACHE_DIR/test DOWNLOAD_DIR=$CI_CACHE_DIR/build WINEARCH=win64 make test && popd; fi"
+  - "if [ $WINDOWS_TEST -eq 1 ]; then pushd win && TEST_DL_CACHE_DIR=$CI_CACHE_DIR/test DOWNLOAD_DIR=$CI_CACHE_DIR/build WINEARCH=win32 make test && popd; fi"
+  - "if [ $WINDOWS_TEST -eq 1 ]; then pushd win && TEST_DL_CACHE_DIR=$CI_CACHE_DIR/test DOWNLOAD_DIR=$CI_CACHE_DIR/build WINEARCH=win64 make test && popd; fi"
 after_success:
   - "if [ $NATIVE_TEST -eq 1 ]; coveralls; fi"
 before_deploy:
