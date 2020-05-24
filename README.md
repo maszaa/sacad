@@ -1,6 +1,6 @@
-SACAD
-=====
-Smart Automatic Cover Art Downloader
+SACADR
+======
+Smart Automatic Cover Art Downloader with Regex
 ------------------------------------
 
 [![PyPI version](https://img.shields.io/pypi/v/sacad.svg?style=flat)](https://pypi.python.org/pypi/sacad/)
@@ -17,6 +17,7 @@ SACAD is a multi platform command line tool to download album covers without man
 
 **Since version 2.0, SACAD has been rewritten to use the [asyncio](https://docs.python.org/3/library/asyncio.html) framework, which typically results in ~40% faster processing for `sacad` and 600-700% faster (yes, 6-7x faster!) for `sacad_r`.**
 
+**On top of the original SACAD this version adds regex matching functionality for allowed image file (formats) when using sacad_r.**
 
 ## Features
 
@@ -35,6 +36,7 @@ SACAD is a multi platform command line tool to download album covers without man
 * Cache search results locally for faster future search
 * Do everything to avoid getting blocked by the sources: hide user-agent and automatically take care of rate limiting
 * Automatically convert/resize image if needed
+* Search for all images files in supported formats if wanted (only `sacad_r`)
 * Multiplatform (Windows/Mac/Linux)
 
 SACAD is designed to be robust and be executed in batch of thousands of queries:
@@ -52,24 +54,17 @@ SACAD is designed to be robust and be executed in batch of thousands of queries:
 
 SACAD requires [Python](https://www.python.org/downloads/) >= 3.5.
 
-### Standalone Windows executable
-
-Windows users can download a [standalone binary](https://github.com/desbma/sacad/releases/latest) which does not require Python.
-
-### Arch Linux
-
-Arch Linux users can install the [sacad](https://aur.archlinux.org/packages/sacad/) AUR package.
-
 ### From PyPI (with PIP)
 
 1. If you don't already have it, [install pip](https://pip.pypa.io/en/stable/installing/) for Python 3
-2. Install SACAD: `pip3 install sacad`
+2. Install SACAD: `pip3 install -e git+https://github.com/maszaa/sacad.git@master#egg=sacad`
 
 ### From source
 
 1. If you don't already have it, [install setuptools](https://pypi.python.org/pypi/setuptools#installation-instructions) for Python 3
-2. Clone this repository: `git clone https://github.com/desbma/sacad`
-3. Install SACAD: `python3 setup.py install`
+2. Clone this repository: `git clone https://github.com/maszaa/sacad`
+3. `cd sacad`
+4. Install SACAD: `python3 setup.py install`
 
 #### Optional
 
