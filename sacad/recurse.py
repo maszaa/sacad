@@ -236,7 +236,8 @@ def analyze_dir(stats, parent_dir, rel_filepaths, cover_pattern, *,
     if cover_pattern != EMBEDDED_ALBUM_ART_SYMBOL:
       cover_filepath = pattern_to_filepath(cover_pattern, parent_dir, metadata)
       if image_file_regex:
-        missing = ignore_existing or not any(filter(None, [image_file_regex.search(item) for item in os.listdir(parent_dir)]))
+        missing = ignore_existing or not any([image_file_regex.search(item)
+                                              for item in rel_filepaths])
       else:
         missing = (not os.path.isfile(cover_filepath)) or ignore_existing
     else:

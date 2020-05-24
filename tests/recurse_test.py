@@ -56,6 +56,7 @@ class TestRecursive(unittest.TestCase):
       f.write(b"\x00" * 8)
     with open(os.path.join(cls.album1_dir, "02 - Not jpg"), "wb") as f:
       f.write(b"\x00" * 8)
+    os.mkdir(os.path.join(cls.album1_dir, "Folder.jpg"))
 
     cls.album2_dir = os.path.join(cls.temp_dir.name, "album2")
     os.mkdir(cls.album2_dir)
@@ -249,7 +250,7 @@ class TestRecursive(unittest.TestCase):
                               os.listdir(__class__.album1_dir),
                               "1.jpg")
       self.assertIn("files", stats)
-      self.assertEqual(stats["files"], 3)
+      self.assertEqual(stats["files"], 4)
       self.assertIn("albums", stats)
       self.assertEqual(stats["albums"], 1)
       self.assertIn("missing covers", stats)
@@ -336,7 +337,7 @@ class TestRecursive(unittest.TestCase):
                                   "1.jpg",
                                   ignore_existing=ignore_existing)
           self.assertIn("files", stats)
-          self.assertEqual(stats["files"], 4)
+          self.assertEqual(stats["files"], 5)
           self.assertIn("albums", stats)
           self.assertEqual(stats["albums"], 1)
           if not ignore_existing:
