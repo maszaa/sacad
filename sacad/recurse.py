@@ -76,7 +76,7 @@ class Work:
             (self.metadata == other.metadata))
 
 
-def analyze_lib(lib_dir, cover_pattern, *, ignore_existing=False, full_scan=False, all_formats=False):
+def analyze_lib(lib_dir, cover_pattern, *, ignore_existing=False, full_scan=False, all_formats=False, wildcard_cover_pattern=False):
   """ Recursively analyze library, and return a list of work. """
   work = []
   stats = collections.OrderedDict(((k, 0) for k in("files", "albums", "missing covers", "errors")))
@@ -91,7 +91,8 @@ def analyze_lib(lib_dir, cover_pattern, *, ignore_existing=False, full_scan=Fals
                              cover_pattern,
                              ignore_existing=ignore_existing,
                              full_scan=full_scan,
-                             all_formats=all_formats)
+                             all_formats=all_formats,
+                             wildcard_cover_pattern=wildcard_cover_pattern)
       progress.set_postfix(stats, refresh=False)
       progress.update(1)
       work.extend(new_work)
@@ -194,7 +195,8 @@ def pattern_to_filepath(pattern, parent_dir, metadata):
 
 
 def analyze_dir(stats, parent_dir, rel_filepaths, cover_pattern, *,
-                ignore_existing=False, full_scan=False, all_formats=False):
+                ignore_existing=False, full_scan=False, all_formats=False,
+                wildcard_cover_pattern=False):
   """ Analyze a directory (non recursively) and return a list of Work objects. """
   r = []
 
@@ -224,7 +226,9 @@ def analyze_dir(stats, parent_dir, rel_filepaths, cover_pattern, *,
     # add work item if needed
     if cover_pattern != EMBEDDED_ALBUM_ART_SYMBOL:
       cover_filepath = pattern_to_filepath(cover_pattern, parent_dir, metadata)
-      if all_formats:
+      if wildcard_cover_pattern:
+        missing = ignore_existing or (not any(filename.endswith(ext) for ext in sacad.SUPPORTED_IMG_FORMATS for filename in rel_filepaths))
+      elif all_formats:
         missing = ignore_existing or (not any(os.path.isfile("%s.%s" % (os.path.splitext(cover_filepath)[0], ext)) for ext in sacad.SUPPORTED_IMG_FORMATS))
       else:
         missing = ignore_existing or (not os.path.isfile(cover_filepath))
@@ -383,6 +387,11 @@ def cl_main():
                           action="store_true",
                           default=False,
                           help="Ignore existing covers and force search and download for all files")
+  arg_parser.add_argument("-w",
+                          "--wildcard-cover-pattern",
+                          action="store_true",
+                          default=False,
+                          help="Allow any file ending with %s to be recognized as an existing cover" % (", ".join([".%s" % ext for ext in sacad.SUPPORTED_IMG_FORMATS.keys()])))
   arg_parser.add_argument("-f",
                           "--full-scan",
                           action="store_true",
@@ -444,7 +453,8 @@ def cl_main():
                      args.cover_pattern,
                      ignore_existing=args.ignore_existing,
                      full_scan=args.full_scan,
-                     all_formats=args.preserve_format)
+                     all_formats=args.preserve_format,
+                     wildcard_cover_pattern=args.wildcard_cover_pattern)
   get_covers(work, args)
 
 
