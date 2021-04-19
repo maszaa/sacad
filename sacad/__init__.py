@@ -25,13 +25,15 @@ async def search_and_download(
     cover_sources = [
         sources.LastFmCoverSource(*source_args),
         sources.DeezerCoverSource(*source_args),
-        sources.AmazonCdCoverSource(*source_args),
-        sources.AmazonDigitalCoverSource(*source_args),
     ]
-    for tld in amazon_tlds:
-        cover_sources.append(sources.AmazonCdCoverSource(*source_args, tld=tld))
+
     if not no_lq_sources:
         cover_sources.append(sources.GoogleImagesWebScrapeCoverSource(*source_args))
+        cover_sources.append(sources.AmazonCdCoverSource(*source_args))
+        cover_sources.append(sources.AmazonDigitalCoverSource(*source_args))
+
+        for tld in amazon_tlds:
+            cover_sources.append(sources.AmazonCdCoverSource(*source_args, tld=tld))
 
     # schedule search work
     search_futures = []
